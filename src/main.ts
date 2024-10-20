@@ -27,9 +27,11 @@ if (ctx) {
 // MarkerLine class
 class MarkerLine {
   private points: { x: number, y: number }[] = [];
+  private thickness: number;
 
-  constructor(initialX: number, initialY: number) {
+  constructor(initialX: number, initialY: number, thickness: number) {
     this.points.push({ x: initialX, y: initialY });
+    this.thickness = thickness;
   }
 
   drag(x: number, y: number) {
@@ -39,6 +41,7 @@ class MarkerLine {
   display(ctx: CanvasRenderingContext2D) {
     if (this.points.length > 0) {
       ctx.beginPath();
+      ctx.lineWidth = this.thickness;
       ctx.moveTo(this.points[0].x, this.points[0].y);
       for (const point of this.points) {
         ctx.lineTo(point.x, point.y);
@@ -53,10 +56,11 @@ let drawing = false;
 let lines: MarkerLine[] = [];
 let currentLine: MarkerLine | null = null;
 let redoStack: MarkerLine[] = [];
+let currentThickness = 1; // Default to thin
 
 canvasElement.addEventListener("mousedown", (event) => {
   drawing = true;
-  currentLine = new MarkerLine(event.offsetX, event.offsetY);
+  currentLine = new MarkerLine(event.offsetX, event.offsetY, currentThickness);
   lines.push(currentLine);
 });
 
@@ -121,3 +125,24 @@ redoButton.addEventListener("click", () => {
   }
 });
 app.appendChild(redoButton);
+
+// Create and add thin marker tool button
+const thinButton = document.createElement("button");
+thinButton.textContent = "Thin";
+thinButton.classList.add("selectedTool");
+thinButton.addEventListener("click", () => {
+  currentThickness = 1;
+  thinButton.classList.add("selectedTool");
+  thickButton.classList.remove("selectedTool");
+});
+app.appendChild(thinButton);
+
+// Create and add thick marker tool button
+const thickButton = document.createElement("button");
+thickButton.textContent = "Thick";
+thickButton.addEventListener("click", () => {
+  currentThickness = 5;
+  thickButton.classList.add("selectedTool");
+  thinButton.classList.remove("selectedTool");
+});
+app.appendChild(thickButton);
