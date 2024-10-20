@@ -75,37 +75,103 @@ class ToolPreview {
   }
 }
 
+// StickerPreview class
+class StickerPreview {
+  private x: number;
+  private y: number;
+  private sticker: string;
+
+  constructor(x: number, y: number, sticker: string) {
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+  }
+
+  updatePosition(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.font = "24px Arial";
+    ctx.fillText(this.sticker, this.x, this.y);
+  }
+}
+
+// Sticker class
+class Sticker {
+  private x: number;
+  private y: number;
+  private sticker: string;
+
+  constructor(x: number, y: number, sticker: string) {
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+  }
+
+  drag(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.font = "24px Arial";
+    ctx.fillText(this.sticker, this.x, this.y);
+  }
+}
+
 // Drawing logic
 let drawing = false;
-let lines: MarkerLine[] = [];
+let lines: (MarkerLine | Sticker)[] = [];
 let currentLine: MarkerLine | null = null;
-let redoStack: MarkerLine[] = [];
+let currentSticker: Sticker | null = null;
+let redoStack: (MarkerLine | Sticker)[] = [];
 let currentThickness = 1; // Default to thin
-let toolPreview: ToolPreview | null = null;
+let toolPreview: ToolPreview | StickerPreview | null = null;
+let currentStickerEmoji: string | null = null;
 
 canvasElement.addEventListener("mousedown", (event) => {
-  drawing = true;
-  currentLine = new MarkerLine(event.offsetX, event.offsetY, currentThickness);
-  lines.push(currentLine);
-  toolPreview = null; // Hide tool preview when drawing
+  if (currentStickerEmoji) {
+    currentSticker = new Sticker(event.offsetX, event.offsetY, currentStickerEmoji);
+    lines.push(currentSticker);
+    toolPreview = null; // Hide tool preview when drawing
+  } else {
+    drawing = true;
+    currentLine = new MarkerLine(event.offsetX, event.offsetY, currentThickness);
+    lines.push(currentLine);
+    toolPreview = null; // Hide tool preview when drawing
+  }
 });
 
 canvasElement.addEventListener("mouseup", () => {
   drawing = false;
   currentLine = null;
+  currentSticker = null;
   canvasElement.dispatchEvent(new Event("drawing-changed"));
 });
 
 canvasElement.addEventListener("mousemove", (event) => {
   if (!drawing && ctx) {
-    if (!toolPreview) {
-      toolPreview = new ToolPreview(event.offsetX, event.offsetY, currentThickness);
+    if (currentStickerEmoji) {
+      if (!toolPreview) {
+        toolPreview = new StickerPreview(event.offsetX, event.offsetY, currentStickerEmoji);
+      } else {
+        toolPreview.updatePosition(event.offsetX, event.offsetY);
+      }
     } else {
-      toolPreview.updatePosition(event.offsetX, event.offsetY);
+      if (!toolPreview) {
+        toolPreview = new ToolPreview(event.offsetX, event.offsetY, currentThickness);
+      } else {
+        toolPreview.updatePosition(event.offsetX, event.offsetY);
+      }
     }
     canvasElement.dispatchEvent(new Event("tool-moved"));
   } else if (drawing && currentLine) {
     currentLine.drag(event.offsetX, event.offsetY);
+    canvasElement.dispatchEvent(new Event("drawing-changed"));
+  } else if (currentSticker) {
+    currentSticker.drag(event.offsetX, event.offsetY);
     canvasElement.dispatchEvent(new Event("drawing-changed"));
   }
 });
@@ -179,8 +245,12 @@ thinButton.textContent = "Thin";
 thinButton.classList.add("selectedTool");
 thinButton.addEventListener("click", () => {
   currentThickness = 1;
+  currentStickerEmoji = null;
   thinButton.classList.add("selectedTool");
   thickButton.classList.remove("selectedTool");
+  sticker1Button.classList.remove("selectedTool");
+  sticker2Button.classList.remove("selectedTool");
+  sticker3Button.classList.remove("selectedTool");
 });
 app.appendChild(thinButton);
 
@@ -189,7 +259,51 @@ const thickButton = document.createElement("button");
 thickButton.textContent = "Thick";
 thickButton.addEventListener("click", () => {
   currentThickness = 5;
+  currentStickerEmoji = null;
   thickButton.classList.add("selectedTool");
   thinButton.classList.remove("selectedTool");
+  sticker1Button.classList.remove("selectedTool");
+  sticker2Button.classList.remove("selectedTool");
+  sticker3Button.classList.remove("selectedTool");
 });
 app.appendChild(thickButton);
+
+// Create and add sticker buttons
+const sticker1Button = document.createElement("button");
+sticker1Button.textContent = "😀";
+sticker1Button.addEventListener("click", () => {
+  currentStickerEmoji = "😀";
+  sticker1Button.classList.add("selectedTool");
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  sticker2Button.classList.remove("selectedTool");
+  sticker3Button.classList.remove("selectedTool");
+  canvasElement.dispatchEvent(new Event("tool-moved"));
+});
+app.appendChild(sticker1Button);
+
+const sticker2Button = document.createElement("button");
+sticker2Button.textContent = "🎉";
+sticker2Button.addEventListener("click", () => {
+  currentStickerEmoji = "🎉";
+  sticker2Button.classList.add("selectedTool");
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  sticker1Button.classList.remove("selectedTool");
+  sticker3Button.classList.remove("selectedTool");
+  canvasElement.dispatchEvent(new Event("tool-moved"));
+});
+app.appendChild(sticker2Button);
+
+const sticker3Button = document.createElement("button");
+sticker3Button.textContent = "🌟";
+sticker3Button.addEventListener("click", () => {
+  currentStickerEmoji = "🌟";
+  sticker3Button.classList.add("selectedTool");
+  thinButton.classList.remove("selectedTool");
+  thickButton.classList.remove("selectedTool");
+  sticker1Button.classList.remove("selectedTool");
+  sticker2Button.classList.remove("selectedTool");
+  canvasElement.dispatchEvent(new Event("tool-moved"));
+});
+app.appendChild(sticker3Button);
