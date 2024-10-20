@@ -51,17 +51,43 @@ class MarkerLine {
   }
 }
 
+// ToolPreview class
+class ToolPreview {
+  private x: number;
+  private y: number;
+  private thickness: number;
+
+  constructor(x: number, y: number, thickness: number) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+  }
+
+  updatePosition(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+}
+
 // Drawing logic
 let drawing = false;
 let lines: MarkerLine[] = [];
 let currentLine: MarkerLine | null = null;
 let redoStack: MarkerLine[] = [];
 let currentThickness = 1; // Default to thin
+let toolPreview: ToolPreview | null = null;
 
 canvasElement.addEventListener("mousedown", (event) => {
   drawing = true;
   currentLine = new MarkerLine(event.offsetX, event.offsetY, currentThickness);
   lines.push(currentLine);
+  toolPreview = null; // Hide tool preview when drawing
 });
 
 canvasElement.addEventListener("mouseup", () => {
@@ -71,9 +97,17 @@ canvasElement.addEventListener("mouseup", () => {
 });
 
 canvasElement.addEventListener("mousemove", (event) => {
-  if (!drawing || !currentLine) return;
-  currentLine.drag(event.offsetX, event.offsetY);
-  canvasElement.dispatchEvent(new Event("drawing-changed"));
+  if (!drawing && ctx) {
+    if (!toolPreview) {
+      toolPreview = new ToolPreview(event.offsetX, event.offsetY, currentThickness);
+    } else {
+      toolPreview.updatePosition(event.offsetX, event.offsetY);
+    }
+    canvasElement.dispatchEvent(new Event("tool-moved"));
+  } else if (drawing && currentLine) {
+    currentLine.drag(event.offsetX, event.offsetY);
+    canvasElement.dispatchEvent(new Event("drawing-changed"));
+  }
 });
 
 // Observer for "drawing-changed" event
@@ -85,6 +119,19 @@ canvasElement.addEventListener("drawing-changed", () => {
     for (const line of lines) {
       line.display(ctx);
     }
+  }
+});
+
+// Observer for "tool-moved" event
+canvasElement.addEventListener("tool-moved", () => {
+  if (ctx && toolPreview) {
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    for (const line of lines) {
+      line.display(ctx);
+    }
+    toolPreview.display(ctx);
   }
 });
 
