@@ -24,8 +24,8 @@ if (ctx) {
   ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 }
 
-// MarkerLine class
-class MarkerLine {
+// DoodleLine class
+class DoodleLine {
   private points: { x: number, y: number }[] = [];
   private thickness: number;
 
@@ -75,16 +75,16 @@ class ToolPreview {
   }
 }
 
-// StickerPreview class
-class StickerPreview {
+// EmojiPreview class
+class EmojiPreview {
   private x: number;
   private y: number;
-  private sticker: string;
+  private emoji: string;
 
-  constructor(x: number, y: number, sticker: string) {
+  constructor(x: number, y: number, emoji: string) {
     this.x = x;
     this.y = y;
-    this.sticker = sticker;
+    this.emoji = emoji;
   }
 
   updatePosition(x: number, y: number) {
@@ -93,21 +93,21 @@ class StickerPreview {
   }
 
   display(ctx: CanvasRenderingContext2D) {
-    ctx.font = "24px Arial";
-    ctx.fillText(this.sticker, this.x, this.y);
+    ctx.font = "32px Arial"; // Adjusted size
+    ctx.fillText(this.emoji, this.x, this.y);
   }
 }
 
-// Sticker class
-class Sticker {
+// Emoji class
+class Emoji {
   private x: number;
   private y: number;
-  private sticker: string;
+  private emoji: string;
 
-  constructor(x: number, y: number, sticker: string) {
+  constructor(x: number, y: number, emoji: string) {
     this.x = x;
     this.y = y;
-    this.sticker = sticker;
+    this.emoji = emoji;
   }
 
   drag(x: number, y: number) {
@@ -116,35 +116,35 @@ class Sticker {
   }
 
   display(ctx: CanvasRenderingContext2D) {
-    ctx.font = "24px Arial";
-    ctx.fillText(this.sticker, this.x, this.y);
+    ctx.font = "32px Arial"; // Adjusted size
+    ctx.fillText(this.emoji, this.x, this.y);
   }
 }
 
 // Drawing logic
 let drawing = false;
-let lines: (MarkerLine | Sticker)[] = [];
-let currentLine: MarkerLine | null = null;
-let currentSticker: Sticker | null = null;
-let redoStack: (MarkerLine | Sticker)[] = [];
-let currentThickness = 1; // Default to thin
-let toolPreview: ToolPreview | StickerPreview | null = null;
-let currentStickerEmoji: string | null = null;
+let lines: (DoodleLine | Emoji)[] = [];
+let currentLine: DoodleLine | null = null;
+let currentEmoji: Emoji | null = null;
+let redoStack: (DoodleLine | Emoji)[] = [];
+let currentThickness = 2; // Adjusted thin thickness
+let toolPreview: ToolPreview | EmojiPreview | null = null;
+let currentEmojiString: string | null = null;
 
-// Initial stickers array
-const stickers = ["😀", "🎉", "🌟"];
-const customStickers: string[] = [];
+// Initial emoji array
+const emojis = ["😀", "🎨", "✨"];
+const customEmojis: string[] = [];
 
-// Function to create sticker buttons
-function createStickerButton(sticker: string) {
+// Function to create emoji buttons
+function createEmojiButton(emoji: string) {
   const button = document.createElement("button");
-  button.textContent = sticker;
+  button.textContent = emoji;
   button.addEventListener("click", () => {
-    currentStickerEmoji = sticker;
+    currentEmojiString = emoji;
     button.classList.add("selectedTool");
     thinButton.classList.remove("selectedTool");
     thickButton.classList.remove("selectedTool");
-    stickerButtons.forEach((btn) => {
+    emojiButtons.forEach((btn) => {
       if (btn !== button) btn.classList.remove("selectedTool");
     });
     canvasElement.dispatchEvent(new Event("tool-moved"));
@@ -154,13 +154,13 @@ function createStickerButton(sticker: string) {
 
 // Create and add canvas event listeners
 canvasElement.addEventListener("mousedown", (event) => {
-  if (currentStickerEmoji) {
-    currentSticker = new Sticker(event.offsetX, event.offsetY, currentStickerEmoji);
-    lines.push(currentSticker);
+  if (currentEmojiString) {
+    currentEmoji = new Emoji(event.offsetX, event.offsetY, currentEmojiString);
+    lines.push(currentEmoji);
     toolPreview = null; // Hide tool preview when drawing
   } else {
     drawing = true;
-    currentLine = new MarkerLine(event.offsetX, event.offsetY, currentThickness);
+    currentLine = new DoodleLine(event.offsetX, event.offsetY, currentThickness);
     lines.push(currentLine);
     toolPreview = null; // Hide tool preview when drawing
   }
@@ -169,15 +169,15 @@ canvasElement.addEventListener("mousedown", (event) => {
 canvasElement.addEventListener("mouseup", () => {
   drawing = false;
   currentLine = null;
-  currentSticker = null;
+  currentEmoji = null;
   canvasElement.dispatchEvent(new Event("drawing-changed"));
 });
 
 canvasElement.addEventListener("mousemove", (event) => {
   if (!drawing && ctx) {
-    if (currentStickerEmoji) {
+    if (currentEmojiString) {
       if (!toolPreview) {
-        toolPreview = new StickerPreview(event.offsetX, event.offsetY, currentStickerEmoji);
+        toolPreview = new EmojiPreview(event.offsetX, event.offsetY, currentEmojiString);
       } else {
         toolPreview.updatePosition(event.offsetX, event.offsetY);
       }
@@ -192,8 +192,8 @@ canvasElement.addEventListener("mousemove", (event) => {
   } else if (drawing && currentLine) {
     currentLine.drag(event.offsetX, event.offsetY);
     canvasElement.dispatchEvent(new Event("drawing-changed"));
-  } else if (currentSticker) {
-    currentSticker.drag(event.offsetX, event.offsetY);
+  } else if (currentEmoji) {
+    currentEmoji.drag(event.offsetX, event.offsetY);
     canvasElement.dispatchEvent(new Event("drawing-changed"));
   }
 });
@@ -261,52 +261,52 @@ redoButton.addEventListener("click", () => {
 });
 app.appendChild(redoButton);
 
-// Create and add thin marker tool button
+// Create and add thin doodle tool button
 const thinButton = document.createElement("button");
-thinButton.textContent = "Thin";
+thinButton.textContent = "Thin Doodle";
 thinButton.classList.add("selectedTool");
 thinButton.addEventListener("click", () => {
-  currentThickness = 1;
-  currentStickerEmoji = null;
+  currentThickness = 2; // Adjusted thin thickness
+  currentEmojiString = null;
   thinButton.classList.add("selectedTool");
   thickButton.classList.remove("selectedTool");
-  stickerButtons.forEach((btn) => btn.classList.remove("selectedTool"));
+  emojiButtons.forEach((btn) => btn.classList.remove("selectedTool"));
 });
 app.appendChild(thinButton);
 
-// Create and add thick marker tool button
+// Create and add thick doodle tool button
 const thickButton = document.createElement("button");
-thickButton.textContent = "Thick";
+thickButton.textContent = "Thick Doodle";
 thickButton.addEventListener("click", () => {
-  currentThickness = 5;
-  currentStickerEmoji = null;
+  currentThickness = 8; // Adjusted thick thickness
+  currentEmojiString = null;
   thickButton.classList.add("selectedTool");
   thinButton.classList.remove("selectedTool");
-  stickerButtons.forEach((btn) => btn.classList.remove("selectedTool"));
+  emojiButtons.forEach((btn) => btn.classList.remove("selectedTool"));
 });
 app.appendChild(thickButton);
 
-// Create and add sticker buttons
-const stickerButtons: HTMLButtonElement[] = [];
-stickers.forEach((sticker) => {
-  const button = createStickerButton(sticker);
-  stickerButtons.push(button);
+// Create and add emoji buttons
+const emojiButtons: HTMLButtonElement[] = [];
+emojis.forEach((emoji) => {
+  const button = createEmojiButton(emoji);
+  emojiButtons.push(button);
   app.appendChild(button);
 });
 
-// Create and add custom sticker button
-const customStickerButton = document.createElement("button");
-customStickerButton.textContent = "Custom Sticker";
-customStickerButton.addEventListener("click", () => {
-  const customSticker = prompt("Enter your custom sticker:", "😊");
-  if (customSticker) {
-    customStickers.push(customSticker);
-    const button = createStickerButton(customSticker);
-    stickerButtons.push(button);
+// Create and add custom emoji button
+const customEmojiButton = document.createElement("button");
+customEmojiButton.textContent = "Custom Emoji";
+customEmojiButton.addEventListener("click", () => {
+  const customEmoji = prompt("Enter your custom emoji:", "😊");
+  if (customEmoji) {
+    customEmojis.push(customEmoji);
+    const button = createEmojiButton(customEmoji);
+    emojiButtons.push(button);
     app.appendChild(button);
   }
 });
-app.appendChild(customStickerButton);
+app.appendChild(customEmojiButton);
 
 // Create and add export button
 const exportButton = document.createElement("button");
