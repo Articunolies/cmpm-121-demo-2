@@ -307,3 +307,41 @@ customStickerButton.addEventListener("click", () => {
   }
 });
 app.appendChild(customStickerButton);
+
+// Create and add export button
+const exportButton = document.createElement("button");
+exportButton.textContent = "Export";
+exportButton.addEventListener("click", () => {
+  // Create a new canvas of size 1024x1024
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  const exportCtx = exportCanvas.getContext("2d");
+
+  if (exportCtx) {
+    // Scale the context to 4x
+    exportCtx.scale(4, 4);
+
+    // Fill the background with white
+    exportCtx.fillStyle = "white";
+    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    // Execute all items on the display list
+    for (const line of lines) {
+      line.display(exportCtx);
+    }
+
+    // Trigger a file download with the contents of the canvas as a PNG file
+    exportCanvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "sketchpad.png";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  }
+});
+app.appendChild(exportButton);
