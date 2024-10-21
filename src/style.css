@@ -87,6 +87,10 @@ button:active {
   background-color: #d0d0d0;
 }
 
+input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
+}
 
 button:focus,
 button:focus-visible {

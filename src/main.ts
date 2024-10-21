@@ -80,11 +80,13 @@ class EmojiPreview {
   private x: number;
   private y: number;
   private emoji: string;
+  private rotation: number;
 
-  constructor(x: number, y: number, emoji: string) {
+  constructor(x: number, y: number, emoji: string, rotation: number) {
     this.x = x;
     this.y = y;
     this.emoji = emoji;
+    this.rotation = rotation;
   }
 
   updatePosition(x: number, y: number) {
@@ -92,9 +94,17 @@ class EmojiPreview {
     this.y = y;
   }
 
+  updateRotation(rotation: number) {
+    this.rotation = rotation;
+  }
+
   display(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate((this.rotation * Math.PI) / 180);
     ctx.font = "32px Arial"; // Adjusted size
-    ctx.fillText(this.emoji, this.x, this.y);
+    ctx.fillText(this.emoji, 0, 0);
+    ctx.restore();
   }
 }
 
@@ -103,11 +113,13 @@ class Emoji {
   private x: number;
   private y: number;
   private emoji: string;
+  private rotation: number;
 
-  constructor(x: number, y: number, emoji: string) {
+  constructor(x: number, y: number, emoji: string, rotation: number) {
     this.x = x;
     this.y = y;
     this.emoji = emoji;
+    this.rotation = rotation;
   }
 
   drag(x: number, y: number) {
@@ -116,8 +128,12 @@ class Emoji {
   }
 
   display(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate((this.rotation * Math.PI) / 180);
     ctx.font = "32px Arial"; // Adjusted size
-    ctx.fillText(this.emoji, this.x, this.y);
+    ctx.fillText(this.emoji, 0, 0);
+    ctx.restore();
   }
 }
 
@@ -130,6 +146,7 @@ let redoStack: (DoodleLine | Emoji)[] = [];
 let currentThickness = 2; // Adjusted thin thickness
 let toolPreview: ToolPreview | EmojiPreview | null = null;
 let currentEmojiString: string | null = null;
+let currentRotation = 0; // Default rotation
 
 // Initial emoji array
 const emojis = ["😀", "🎨", "✨"];
@@ -155,7 +172,7 @@ function createEmojiButton(emoji: string) {
 // Create and add canvas event listeners
 canvasElement.addEventListener("mousedown", (event) => {
   if (currentEmojiString) {
-    currentEmoji = new Emoji(event.offsetX, event.offsetY, currentEmojiString);
+    currentEmoji = new Emoji(event.offsetX, event.offsetY, currentEmojiString, currentRotation);
     lines.push(currentEmoji);
     toolPreview = null; // Hide tool preview when drawing
   } else {
@@ -177,7 +194,7 @@ canvasElement.addEventListener("mousemove", (event) => {
   if (!drawing && ctx) {
     if (currentEmojiString) {
       if (!toolPreview) {
-        toolPreview = new EmojiPreview(event.offsetX, event.offsetY, currentEmojiString);
+        toolPreview = new EmojiPreview(event.offsetX, event.offsetY, currentEmojiString, currentRotation);
       } else {
         toolPreview.updatePosition(event.offsetX, event.offsetY);
       }
@@ -307,6 +324,21 @@ customEmojiButton.addEventListener("click", () => {
   }
 });
 app.appendChild(customEmojiButton);
+
+// Create and add rotation slider
+const rotationSlider = document.createElement("input");
+rotationSlider.type = "range";
+rotationSlider.min = "0";
+rotationSlider.max = "360";
+rotationSlider.value = "0";
+rotationSlider.addEventListener("input", (event) => {
+  currentRotation = parseInt((event.target as HTMLInputElement).value, 10);
+  if (toolPreview instanceof EmojiPreview) {
+    toolPreview.updateRotation(currentRotation);
+    canvasElement.dispatchEvent(new Event("tool-moved"));
+  }
+});
+app.appendChild(rotationSlider);
 
 // Create and add export button
 const exportButton = document.createElement("button");
