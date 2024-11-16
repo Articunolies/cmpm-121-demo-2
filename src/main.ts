@@ -143,10 +143,18 @@ let lines: (DoodleLine | Emoji)[] = [];
 let currentLine: DoodleLine | null = null;
 let currentEmoji: Emoji | null = null;
 let redoStack: (DoodleLine | Emoji)[] = [];
-let currentThickness = 2; // Adjusted thin thickness
 let toolPreview: ToolPreview | EmojiPreview | null = null;
 let currentEmojiString: string | null = null;
-let currentRotation = 0; // Default rotation
+
+// Line Thickness
+let thinThickness = 2; // Thin Line Thickness
+let thickThickness = 8; // Thick Line Thickness
+let currentThickness = thinThickness; // Adjusted thin thickness
+let currentEmojiRotation = 0; // Default emoji rotation
+
+let exportScale = 4; // Scaling for export(adjusts size of export canvas & ctx scale)
+let exportScaleWidth = exportScale; // Individual Export Adjustment for Width
+let exportScaleHeight = exportScale; // Individual Export Adjustment for Height
 
 // Initial emoji array
 const emojis = ["😀", "🎨", "✨"];
@@ -176,7 +184,7 @@ canvasElement.addEventListener("mousedown", (event) => {
       event.offsetX,
       event.offsetY,
       currentEmojiString,
-      currentRotation,
+      currentEmojiRotation,
     );
     lines.push(currentEmoji);
     toolPreview = null; // Hide tool preview when drawing
@@ -207,7 +215,7 @@ canvasElement.addEventListener("mousemove", (event) => {
           event.offsetX,
           event.offsetY,
           currentEmojiString,
-          currentRotation,
+          currentEmojiRotation,
         );
       } else {
         toolPreview.updatePosition(event.offsetX, event.offsetY);
@@ -301,7 +309,7 @@ const thinButton = document.createElement("button");
 thinButton.textContent = "Thin Doodle";
 thinButton.classList.add("selectedTool");
 thinButton.addEventListener("click", () => {
-  currentThickness = 2; // Adjusted thin thickness
+  currentThickness = thinThickness; // Adjusted thin thickness
   currentEmojiString = null;
   thinButton.classList.add("selectedTool");
   thickButton.classList.remove("selectedTool");
@@ -313,7 +321,7 @@ app.appendChild(thinButton);
 const thickButton = document.createElement("button");
 thickButton.textContent = "Thick Doodle";
 thickButton.addEventListener("click", () => {
-  currentThickness = 8; // Adjusted thick thickness
+  currentThickness = thickThickness; // Adjusted thick thickness
   currentEmojiString = null;
   thickButton.classList.add("selectedTool");
   thinButton.classList.remove("selectedTool");
@@ -355,9 +363,9 @@ rotationSlider.min = "0";
 rotationSlider.max = "360";
 rotationSlider.value = "0";
 rotationSlider.addEventListener("input", (event) => {
-  currentRotation = parseInt((event.target as HTMLInputElement).value, 10);
+  currentEmojiRotation = parseInt((event.target as HTMLInputElement).value, 10);
   if (toolPreview instanceof EmojiPreview) {
-    toolPreview.updateRotation(currentRotation);
+    toolPreview.updateRotation(currentEmojiRotation);
     canvasElement.dispatchEvent(new Event("tool-moved"));
   }
 });
@@ -369,13 +377,13 @@ exportButton.textContent = "Export";
 exportButton.addEventListener("click", () => {
   // Create a new canvas of size 1024x1024
   const exportCanvas = document.createElement("canvas");
-  exportCanvas.width = 1024;
-  exportCanvas.height = 1024;
+  exportCanvas.width = canvasElement.width * exportScaleWidth;
+  exportCanvas.height = canvasElement.height * exportScaleHeight;
   const exportCtx = exportCanvas.getContext("2d");
 
   if (exportCtx) {
     // Scale the context to 4x
-    exportCtx.scale(4, 4);
+    exportCtx.scale(exportScaleWidth, exportScaleHeight);
 
     // Fill the background with white
     exportCtx.fillStyle = "white";
