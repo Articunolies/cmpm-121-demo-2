@@ -1,5 +1,3 @@
-// test
-
 import "./style.css";
 
 const APP_NAME = "Sick SketchPad";
@@ -344,6 +342,11 @@ customEmojiButton.addEventListener("click", () => {
   }
 });
 app.appendChild(customEmojiButton);
+
+// Create and add rotation slider text
+const rotationSliderText = document.createElement("span");
+rotationSliderText.innerHTML = "<br><br>Emoji Rotation:";
+app.appendChild(rotationSliderText);
 
 // Create and add rotation slider
 const rotationSlider = document.createElement("input");
