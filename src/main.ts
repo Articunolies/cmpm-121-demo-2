@@ -1,3 +1,5 @@
+// test
+
 import "./style.css";
 
 const APP_NAME = "Sick SketchPad";
@@ -26,7 +28,7 @@ if (ctx) {
 
 // DoodleLine class
 class DoodleLine {
-  private points: { x: number, y: number }[] = [];
+  private points: { x: number; y: number }[] = [];
   private thickness: number;
 
   constructor(initialX: number, initialY: number, thickness: number) {
@@ -172,12 +174,21 @@ function createEmojiButton(emoji: string) {
 // Create and add canvas event listeners
 canvasElement.addEventListener("mousedown", (event) => {
   if (currentEmojiString) {
-    currentEmoji = new Emoji(event.offsetX, event.offsetY, currentEmojiString, currentRotation);
+    currentEmoji = new Emoji(
+      event.offsetX,
+      event.offsetY,
+      currentEmojiString,
+      currentRotation,
+    );
     lines.push(currentEmoji);
     toolPreview = null; // Hide tool preview when drawing
   } else {
     drawing = true;
-    currentLine = new DoodleLine(event.offsetX, event.offsetY, currentThickness);
+    currentLine = new DoodleLine(
+      event.offsetX,
+      event.offsetY,
+      currentThickness,
+    );
     lines.push(currentLine);
     toolPreview = null; // Hide tool preview when drawing
   }
@@ -194,13 +205,22 @@ canvasElement.addEventListener("mousemove", (event) => {
   if (!drawing && ctx) {
     if (currentEmojiString) {
       if (!toolPreview) {
-        toolPreview = new EmojiPreview(event.offsetX, event.offsetY, currentEmojiString, currentRotation);
+        toolPreview = new EmojiPreview(
+          event.offsetX,
+          event.offsetY,
+          currentEmojiString,
+          currentRotation,
+        );
       } else {
         toolPreview.updatePosition(event.offsetX, event.offsetY);
       }
     } else {
       if (!toolPreview) {
-        toolPreview = new ToolPreview(event.offsetX, event.offsetY, currentThickness);
+        toolPreview = new ToolPreview(
+          event.offsetX,
+          event.offsetY,
+          currentThickness,
+        );
       } else {
         toolPreview.updatePosition(event.offsetX, event.offsetY);
       }
